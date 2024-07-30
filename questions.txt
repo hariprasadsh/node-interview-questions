@@ -1,0 +1,6 @@
+* what is buffer in node js?
+    buffer is a way to store and manipulate binary data in node js (image, videos, raw data from network)
+    we can do operations like slice, concatenate etc.
+* What is a middleware in node js?
+    middlewares executed when a request reach a server and before controller sends the response
+    middleware has access to request, response and next
