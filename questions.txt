@@ -2,7 +2,7 @@
     buffer is a way to store and manipulate binary data in node js (image, videos, raw data from network)
     we can do operations like slice, concatenate etc.
 * What is a middleware in node js?
-    middlewares executed when a request reach a server and before controller sends the response
+    middlewares are executed when a request reach a server and before controller sends the response
     middleware has access to request, response and next
 * Event Loop
     Microtasks queue (priority)
@@ -36,3 +36,46 @@
     process.stdout // writable stream
     process.stderr // writable stream that recognises error
     process.argv // is an array which contain node itself as the first element and absolute path of file as second element
+* node modules
+    os
+    fs
+    events
+    http
+* REPL
+    Read Evaluate Print Loop
+    _ to get the previous result in node console
+    press tab to reveal all the methods
+* Routing
+    url is the package required for routing
+* API
+    service from which we can request some data
+* NPM
+    npm outdated - returns a list of outdated packages
+* Libuv
+    responsible for asynchronous io operations
+    event loop and thread pool
+    completely written in c++
+    v8 is written in JS and c++
+* Nodejs process
+    instance of a program in execution
+    process have a single thread
+    initialize program -> execute top level code -> require modules -> register callbacks -> start eventloop
+* Thread pool
+    provided by Libuv
+    provides 4 (or more) additional threads
+    eventloop offloads the heave tasks to threadpool
+    eg. FS api's, cryptography, compression,dns lookup etc.
+* Event loop
+    does the orchestration
+    event driven architecture
+    event loop starts running as soon as the app is started
+    start -> expired timer callbacks (cb) -> i/o polling and cb -> setImmediate (cb) ->close (cb) (eg. when a web server/process is shutdown)
+    process.nextTick()
+    other microtask queue (eg. resolved promises)
+    nextTick and microtasks have the highest priority
+* To prevent event loop from blocking
+    don't use sync versions of fs, crypto and zlibmodules in cb
+    don't perform complex calculations(eg. loop inside loops)
+    be careful with JSON in large objects
+    do not use too complex regular exp
+    
