@@ -7,6 +7,27 @@
 * Event Loop
     Microtasks queue (priority)
     Macrotasks queue
+* Nodejs architecture
+    callstack -> eventloop -> thread pool -> event queue -> event loop 
+    when there is an async operation the eventloop offshores it to the threadpool
+    but compute-heavy or cpu intensive tasks are done in the main thread
+    this will block the app untill the process is finished
+    to mitigate this issue nodjs introduced WORKER THREADS
+    with worker threads we will be able to achieve MULTI THREADING in nodejs
+* Worker threads and clusters
+ - Worker Threads
+    feature of node js that allows to run javascript code parallel to main threads
+    useful for performing CPU-intense js operations
+    NOT MUCH help with I/O intensive work (that will be already offshored to thread loop)
+    Worker.on(message), Worker.on(error), Worker.on(exit)
+    advantages
+        improves performance
+        improves parallellism (eg.determine if 1,999,3241,123 is prime number. we can divide the process into 2 worker threads)
+ - clusters
+    used to run multiple instances in a single threaded node application
+    cluster module allows to create child processes that all share the server port
+    each child process will have its own memory, event loop, v8 instance and shares the server port
+    cluster.fork() is used to create child processes
 * setImmediate
     used to execute right after a curret event loop finishes
     same as setTimeout but no delays
@@ -16,18 +37,7 @@
     implement a pre-programed response
 * clustering
     technique used to enhance and scale node applications
-    clustering enables us to create multiple identical worker processes instead of runningf a single node process
-* Worker threads and clusters
- - Worker Threads
-    feature of node js that allows to run javascript code parallel to main threads
-    useful for performing CPU-intense js operations
-    not much help with I/O intensive work
-    Worker.on(message), Worker.on(error), Worker.on(exit)
- - clusters
-    used to run multiple instances in a single threaded node application
-    cluster module allows to create child processes that all share the server port
-    each child process will have its own memory, event loop, v8 instance and shares the server port
-    cluster.fork() is used to create child processes
+    clustering enables us to create multiple identical worker processes instead of running a single node process
 * process
     is a global object that can be called inside any module without requiring it
     provides various information about the runtime of a program
@@ -72,10 +82,92 @@
     start -> expired timer callbacks (cb) -> i/o polling and cb -> setImmediate (cb) ->close (cb) (eg. when a web server/process is shutdown)
     process.nextTick()
     other microtask queue (eg. resolved promises)
-    nextTick and microtasks have the highest priority
+    nextTick and other microtasks have the highest priority
 * To prevent event loop from blocking
     don't use sync versions of fs, crypto and zlibmodules in cb
     don't perform complex calculations(eg. loop inside loops)
     be careful with JSON in large objects
     do not use too complex regular exp
     
+* Streams
+    used to process(read/write) data piece by piece (chunks) without completing the operation
+    dont have to keep all the data in memory
+    instances of event emitter class
+    eg. read a file using streams
+    4 types of streams
+        - readable stream
+            streams from which we can read/consume data
+            eg. http requests, fs read streams
+            important events - read, end
+            important functions - pipe(), read()
+        - writable stream
+            streams to which we can write data
+            eg. http responses, fs write streams
+            importans events - drain, finishes
+            important functions - write(), end()
+        - duplex stream
+            we can read and write
+            eg. net web socket
+        - transform stream
+            duplex streams that can transform data
+            eg. zlib Gzip creation
+    backpressure - happens when response cannot send the data nearly as fast as it receives from the file
+* modules
+    caching - when a module is required, it will be cached to the memory 
+* Node frameworks
+    express.js - routing, middlewares, server-side rendering, mvc architecture
+    meteorJS
+    nestJS
+    hapiJS
+* APIs 
+    node APIs
+    DOM APIs
+    REST - Representational State Transfer
+        separate API into logical resources
+        expose structured, resource based URLs
+        use HTTP methods
+        send data as JSON
+        be Stateless - all state is handled on the client
+            eg. in pagination the client will send the next page number to the server. The server need not have to remember that
+* express
+    to serve static files use express.static()
+    NODE_ENV = "development" will set the node environment to development
+    package for configuring env - dotenv
+    to load the env file we use dotenv.config(). This should be called in the beginning before we require any file
+    in windows setting the env in commandline will be SET NODE_ENV=production & nodemon server.js
+
+* mongodb
+    document based database
+    db->collections(tables)->documents(rows)->key-value pair
+    use <dbname> - create or switch to an existing db
+    db.<collection name>.insertMany() - insert into a new collection multiple documents
+        insertOne() - will insert single document into a new collection
+        find() - will display all documents
+            $lte - lesser than or equal to
+            $gte - greater than or equal to
+            $lt - less than
+            $gt - greater than
+            eg: db.tours.find({$or:[{price: {$gt: 500}}, {rating: {$gt: 4.8}}]}, {name: 1}) - will give the tour name where price > 500 and rating > 4.8
+        updateOne() - will update single document
+            eg: db.tours.updateOne({name: "The snow adventurer"}, {$set: {price: 697}}) - will update the price of the tour name The snow adventurer
+                even if there were multiple documents, the updateOne() will only update first document
+                we can also insert a new key value pair
+                eg: db.tours.updateOne({name: "The sea explorer"}, {$set: {difficulty: "medium"}})
+        updateMany() - will update more than one documents at once
+        replaceOne() - will replace an entire document with a new one based on filter
+        replaceMany() - will replace more than one documents at once
+        deleteOne() - will delete the first result of a search
+            eg: db.tours.deleteOne({rating: {$lt: 4.8}}) - will delete the first tours with rating < 4.8
+        deleteMany() - will delete more than one documents at once
+            to delete all the documents  - db.tours.deleteMany({})
+    show dbs - will show all the db's
+    show collections - will show all the collections of curren db
+    db.<collection name>.drop() - will drop the collection
+    atlas - hosted db
+    cluster - instance of our db
+
+* mongoose
+    Object Data Modelling (ODM) for mongodb and Nodejs
+    Features: schemas to model data and relationships, data validation, simple query api, middleware
+    Mongoose schema - describe the structure of data, default values and validation
+    Mongoose Model - a wrapper for schema, providing an interface to db crud operations
