@@ -14,7 +14,7 @@
     this will block the app untill the process is finished
     to mitigate this issue nodjs introduced WORKER THREADS
     with worker threads we will be able to achieve MULTI THREADING in nodejs
-* Worker threads and clusters
+* Worker threads and clusters and child processes
  - Worker Threads
     feature of node js that allows to run javascript code parallel to main threads
     useful for performing CPU-intense js operations
@@ -22,12 +22,22 @@
     Worker.on(message), Worker.on(error), Worker.on(exit)
     advantages
         improves performance
-        improves parallellism (eg.determine if 1,999,3241,123 is prime number. we can divide the process into 2 worker threads)
+        improves parallellism (eg.determine if 1,999,3241,123 is prime number. we can divide the process into 2 or more worker threads)
  - clusters
     used to run multiple instances in a single threaded node application
     cluster module allows to create child processes that all share the server port
     each child process will have its own memory, event loop, v8 instance and shares the server port
     cluster.fork() is used to create child processes
+ - child processes
+    used when we need complete isolation or when we want to utilize external resources
+    easy to implement
+    each child process will have its own memory, event loop, v8 instance
+    has higher resource overhead compared to worker threads
+    creation - exec, execFile, spawn, fork
+        exec - spawns a shell then executes the command within the shell, buffering output
+            util.promisify() - will return a promise for an object with stdout and stderr properties
+        execFile - similar to exec() except that it does not spawn a shell by default.The specified executable file is spawned directly as new process
+        fork - used specifically to spawn new node js process. same as spawn. only difference is the returned child process will have additional communication channel built in for messaging between parent and child
 * setImmediate
     used to execute right after a curret event loop finishes
     same as setTimeout but no delays
@@ -37,7 +47,8 @@
     implement a pre-programed response
 * clustering
     technique used to enhance and scale node applications
-    clustering enables us to create multiple identical worker processes instead of running a single node process
+    clustering enables us to create multiple identical worker/child processes instead of running a single node process
+    pm2 - third party module for clustering
 * process
     is a global object that can be called inside any module without requiring it
     provides various information about the runtime of a program
@@ -73,7 +84,7 @@
 * Thread pool
     provided by Libuv
     provides 4 (or more) additional threads
-    eventloop offloads the heave tasks to threadpool
+    eventloop offshores the heavy tasks to threadpool
     eg. FS api's, cryptography, compression,dns lookup etc.
 * Event loop
     does the orchestration
@@ -87,8 +98,7 @@
     don't use sync versions of fs, crypto and zlibmodules in cb
     don't perform complex calculations(eg. loop inside loops)
     be careful with JSON in large objects
-    do not use too complex regular exp
-    
+    do not use too complex regular exp    
 * Streams
     used to process(read/write) data piece by piece (chunks) without completing the operation
     dont have to keep all the data in memory
@@ -171,3 +181,15 @@
     Features: schemas to model data and relationships, data validation, simple query api, middleware
     Mongoose schema - describe the structure of data, default values and validation
     Mongoose Model - a wrapper for schema, providing an interface to db crud operations
+
+* steps to improve nod application
+    caching - eg. Redis
+    configure timeouts - timeouts in http library such as axios (connection timeout, read timeout)
+    use cluster modue in node app
+    load balancers
+    use extra threads of nodejs (worker threads)
+* setting the type to 'module' in package.json enables us to import packages using 'import'
+* loadtest eg
+    npx loadtest -n 1200 -c 400 -k http://localhost:3000/heavy
+    -n - number of requests
+    -c - concurrent requests

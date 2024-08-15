@@ -1,0 +1,24 @@
+{
+	"name": "clustering-example",
+	"version": "1.0.0",
+	"description": "learning clustering in nodejs",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"start": "nodemon"
+	},
+	"keywords": [
+		"clustering",
+		"pm2",
+		"loadbalancing"
+	],
+	"author": "hari",
+	"license": "ISC",
+	"dependencies": {
+		"express": "^4.19.2"
+	},
+	"devDependencies": {
+		"loadtest": "^8.0.9",
+		"pm2": "^5.4.2"
+	}
+}
