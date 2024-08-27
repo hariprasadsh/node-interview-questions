@@ -11,8 +11,8 @@
     callstack -> eventloop -> thread pool -> event queue -> event loop 
     when there is an async operation the eventloop offshores it to the threadpool
     but compute-heavy or cpu intensive tasks are done in the main thread
-    this will block the app untill the process is finished
-    to mitigate this issue nodjs introduced WORKER THREADS
+    this will block the app until the process is finished
+    to mitigate this issue nodejs introduced WORKER THREADS
     with worker threads we will be able to achieve MULTI THREADING in nodejs
 * Worker threads and clusters and child processes
  - Worker Threads
@@ -37,10 +37,7 @@
         exec - spawns a shell then executes the command within the shell, buffering output
             util.promisify() - will return a promise for an object with stdout and stderr properties
         execFile - similar to exec() except that it does not spawn a shell by default.The specified executable file is spawned directly as new process
-        fork - used specifically to spawn new node js process. same as spawn. only difference is the returned child process will have additional communication channel built in for messaging between parent and child
-* setImmediate
-    used to execute right after a curret event loop finishes
-    same as setTimeout but no delays
+        fork - used specifically to spawn new node js process. same as spawn. only difference is the returned child process will have additional communication channel built in for messaging between parent and child through Inter Process Communication (IPC)
 * Stubs
     smaller program routines that substitutes a longer program
     dummy objects for testing
@@ -85,15 +82,19 @@
     provided by Libuv
     provides 4 (or more) additional threads
     eventloop offshores the heavy tasks to threadpool
-    eg. FS api's, cryptography, compression,dns lookup etc.
+    eg. FS api's, cryptography, compression, dns lookup etc.
 * Event loop
     does the orchestration
     event driven architecture
     event loop starts running as soon as the app is started
+    timers->pending callbacks->idle/prepare->poll->check->close
     start -> expired timer callbacks (cb) -> i/o polling and cb -> setImmediate (cb) ->close (cb) (eg. when a web server/process is shutdown)
-    process.nextTick()
+    process.nextTick() - called immediately after the current operation is finished regardless of the execution phase of loop
     other microtask queue (eg. resolved promises)
     nextTick and other microtasks have the highest priority
+* setImmediate
+    used to execute right after a curret event loop finishes
+    same as setTimeout but no delays
 * To prevent event loop from blocking
     don't use sync versions of fs, crypto and zlibmodules in cb
     don't perform complex calculations(eg. loop inside loops)
@@ -103,6 +104,8 @@
     used to process(read/write) data piece by piece (chunks) without completing the operation
     dont have to keep all the data in memory
     instances of event emitter class
+    any read stream can be piped into any write stream
+    process.stdin.pipe(writable) - pipe the user input to a file
     eg. read a file using streams
     4 types of streams
         - readable stream
@@ -183,13 +186,243 @@
     Mongoose Model - a wrapper for schema, providing an interface to db crud operations
 
 * steps to improve nod application
-    caching - eg. Redis
+    caching - eg. Redis, memcached
     configure timeouts - timeouts in http library such as axios (connection timeout, read timeout)
     use cluster modue in node app
     load balancers
     use extra threads of nodejs (worker threads)
+    optimise queries - use indexes, optimise complex queries
+    minimize middleware usage
+    use streaming for large data transfers
+    gzip compression - compression middleware in express
+    use CDN based out of locations
+    performance monitoring - new relic, pm2
+    avoid memory leaks - use chrome tools like `heapdump`
+    tune garbage collection - --max-old-space-size - control maximum memory size of heap
+    error handling
 * setting the type to 'module' in package.json enables us to import packages using 'import'
 * loadtest eg
     npx loadtest -n 1200 -c 400 -k http://localhost:3000/heavy
     -n - number of requests
     -c - concurrent requests
+
+* security best practices
+    Rate limiting
+        - DDoS(denial of service attack)
+        - type of cyber attack where prepetrator makes a service unavailable for the users
+        - the prepetrator sends 1000s of requests to the server to bring it down
+        - can be handled by rate limiting
+        - rate limiting is the number of request a server can handle at a given period of time
+        - use an NGNIX server and configure the rate limitter
+        - Nginx is a popular web server that can be used to handle incoming requests
+        - using middleware libraries - express-rate-limit
+    Password encryption
+        - encrypt the passwords before storing it to db
+        - use bcrypt package
+    JWT blacklisting
+        - JSON web token
+        - JWT blacklisting is a method to prevent the misuse of compromised JWT tokens
+        - When a user logs in, a JWT is generated and sent to the client
+        - The JWT is stored in the client's browser or device
+        - If a JWT is compromised, it can be used to access protected resources
+        - To prevent this, JWT blacklisting involves maintaining a list of blacklisted JWTs
+        - Whenever a request is made with a JWT, the server checks if the JWT is present in the blacklist
+        - If the JWT is found in the blacklist, the server denies access to the protected resource
+        - The server also periodically checks the blacklist and removes expired JWTs
+    JSON schema validation
+     - a technique used to validate the structure and format of JSON data
+     - specification that defines a set of rules for validating JSON data
+     - by defining a schema you can ensure that the incoming data confirms to a specific structured
+     - libraries available - Ajv, jsonschema, z-schema
+    Escaping HTML & CSS
+        - is a recommended way to secure web applications agaist XSS(cross-site scripting) attacks
+        - XSS attacks occour when an attacker injects malicious scripts into a web page
+        - use libraries like sanitize-html or xss
+    ORM/ODM against injections
+        - injection attacks occur when an attacker injects malicious code into a web application, typically through input fields
+        - this can lead to unauthorized access, data manipulation, or even server takeover
+        - ORM - object relational mapping
+        - ODM - object document mapping
+        - libraries used in node - mongoose, sequelize, TypeORM
+        - ORM/ODM provide an abstraction layer between app code and db
+        - these libraries handle the translation of SQL or NoSQL queries into a format that can be executed safely
+        - these libraries properly sanitize and validate the input before used in db queries
+        - on creating the schema, if we give {timestamps: true}, mongo will add createdAt and updatedAt automatically in the document
+        - mongodb aggregation
+        - mongoose-aggregate-paginate-v2
+        - mongoose hooks -> its like trigger prehooks, posthooks, asynchronous posthooks, save/validate hooks etc.
+        - mongoose methods -> if we want to add a special method to schema (eg. in user schema whenever we save the password we need to encrypt it before saving)
+    Security linter
+        - a tool or method used to identify and fix security vulnerabilities in source code
+        - security linters are used to enforce coding standards, detect potential security issues, and provide recommendations for improving code security
+        - they analyze the code for common security mistakes, such as insecure data handling, inadequate input validation, and potential cross-site scripting (XSS) vulnerabilities
+        - popular linters - ESLint, SonarJS, TSLint
+    Running node.js as a non root user
+        - running the Node.js as a non-root user, we can limit the potential damage of an application is compramised
+        - non-root users have limited permission that means the attacker will not have access to critical system resources
+        - node already ships with an auxiliary user which we can use bys defining USER node (privilages are limited)
+    Module loading with a variable
+    Limiting the payload size
+        - almost same as rate limiting
+        - can prevent DoS attacks
+        - we can use express-limit middleware
+        - status: 413 Payload Too Large
+    Authentication limits
+        - limit the number of login attempts
+        - eg. when we give wrong username/password too many times, we will get locked out for sometime
+        - we can use rate limiter
+    HTTP response headers & helmet
+        - Helmet helps secure Express apps by setting HTTP response headers
+        - X-XSS-Protection
+        - X-Content-Type-Options: nosniff - prevents browsers from trying to guess the content type of a response
+        - X-Frame-Options: DENY - helps prevent clickjacking attacks by preventing a webpage from being rendered within a frame or iframe
+    Vulnerability inspections
+        - check for Vulnerability in npm packages
+        - npm-audit
+    Security hardening
+        - hardening means extra security
+        - OWASP (application security verification standards)
+    Leaking server information
+        - server information should not be exposed
+        - disable x-powered-by feature - it will reveal what server you are using(server.disable('x-powered-by'))
+    npmignore
+        - similar to gitignore
+        - it is a file used in Node.js projects to specify the files and directories to be ignored when publishing the package npm registry
+        - created in the root directory of the projects
+        - when publishing the package using npm publish npm will read the package.json file and .npmignore file (if not present will read .gitignore file)
+    Child processes
+        - whenever you are spawning a child process dont make it rely on user's input.  
+
+* when to use cluster module and worker threads
+    cluster module
+        - high availability of services
+        - little to no downtime
+        - basic scalability based on demand
+    worker threads
+        - freeing up main thread
+        - cpu intensive processes
+        - native js multithreading
+* use Swagger for api documentation
+* use Redis for caching
+* Node.js performance - optimizing the event loop
+* Node.js design patterns
+    design patterns are reusable solutions to common problems in software design
+        - Creation patterns
+            - Singleton
+            - Factory
+            - Builder
+        - Structural patterns
+            - Adapter
+            - Decorator
+            - Facade
+        - Behavioral patterns
+            - Observer
+            - Chain of responsibility (COR)
+        - Concurrency patterns
+            - Thread pool 
+            - Observer
+    Observer pattern
+        - One to many relationship between objects
+        - event emitters - eventEmitter.on() is an observer
+        - eg. server.listen(), server.on() is an observer
+    Command pattern
+        - event-driven programming
+        - queuing and logging requests
+        - supporting undoable operations
+    Builder pattern
+        - creational design pattern in software development
+        - used to construct a complex object step by step
+        - node.js - use builder pattern for complex configuration and settings for eg. creating a db connection configuration
+    Prototype pattern
+        - used to create objects by cloning existing objects known as prototypes
+        - used for creating complex configurartion or settings for eg. creating database connections
+        - by defining a prototype object with common properties and methods, you can create new instances of the configuration by cloning the prototype
+        - his approach helps in reducing redundancy and improves code reusability
+    Chain of responsibility (COR)
+        - a behavioral pattern that allows multiple objects to handle a request until one of them can process it
+        - in node.js COR pattern can be used in express middleware, event handling or request processing
+        - in the chain of objects if an object cannot handle the request, it will pass the request to next object in chain
+        - core components are handler, request/event and chain
+        - can be implemented using arrays, objects or classes
+    IIFE (Immediately Invoked Function Expression)
+        - a js function that is execute immedietly after it is defined
+        - in node.js this pattern is not commonly used
+        - these are frequently used in js
+    Factory pattern
+        - the factory method allows you to centralize the logic of creating objects (which object to create and why) in a single place
+        - usecase - handling error object creation
+        - create an ErrorFactory class
+    Dependency Injection (DI)
+        - used a lot in Angular
+        - provides code reusability
+        - main aim is to remove the responsibility of creation and management of an object's dependencies from the object itself to an external component
+        - rather than creating dependencies inside an object, the object receives them from an external source at runtime
+    Singleton pattern
+        - old design pattern
+        - it allows you to instantiate an object once and then use that one every time you need it
+        - eg. db connection
+    Module pattern
+        - design pattern that allows you to encapsulate code into reusable modules
+        - in node.js it is implemented using module.exports or exports object
+    Adapter pattern
+        - structural pattern
+        - it is used to make 2 incompatible interfaces work together
+        - it wraps an existing class with a new interface, allowing the client to use the new interface without being aware of the underlying implementation
+        - for instance, if you have a third-party library that provides a specific functionality but does not meet your requirements, you can create an adapter that wraps the library and adapts it to your own interface
+    Decorator pattern
+        - structural pattern
+        - used heavily in Angular
+        - it is used to add new behaviours and responsibilities to an existing object dynamically without modifying its structure
+        - a flexible alternative for subclassing
+        - eg. decorator that logs the execution of a method
+        - component, decorator and client are the 3 main components in decorator pattern
+            component - the object that needs to be extended with new behaviours
+            decorator - an object that adds the new behaviours to the component
+            client - the code that uses the component and decorator
+* API authentication using JWT
+    - install jsonwebtoken package
+* MVC - Model View Controller
+    Model - Business logic
+    Controller - Application logic
+    View - Presentation logic
+    Application logic
+        - code that is only concerned about application's implementation, not the underlying business problem we are trying to solve
+        - concerned about managing requests and responses
+        - bridge between model and view layers
+    Business logic
+        - code that actually solves the business problem we set out to solve
+        - directly related to business rules, how the business works and business needs
+        - eg.
+            creating new tours in the db
+            checking if user's passwords is correct
+            validating user input data
+            ensuring only the users who bought the tour can review it
+    Fat models/Thin controllers - offload as much as logic as possible into the models and keep controllers simple and thin as possible
+* Require and import
+    - require is a common way to include module in node.js
+    - used in commonJS
+    - synchronous module loading
+    - import is used for module imports in ecma script modules
+    - asynchronous module loading
+    -to use import you need to enable ESM using --experimental-modules
+* Default export and Named export
+
+* DNS lookup
+    - internal api of dns module used to resolve IP addresses of specified hostname
+* Resolving unhandled exceptions
+    - can be caught at the process level by attaching a handler uncaughtException
+* Schema description and data validation for JS
+    - Joi
+    - jsonschema
+* Logging in nodejs and express
+    - winston
+    - morgan - a middleware for logging
+* Authentication
+    - use bcrypt.js package to encrypt the password
+    - we can alos use in-built crypto module
+    - cookie-parser is a middleware to access the cookies from request
+    - jsonwebtoken - for token creation
+    - thunderclient - a plugin to test out the api in vs code
+    - jwt and server token
+    - jwt are bearer token - who ever bears the token is a valid user.
+
