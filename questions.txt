@@ -148,43 +148,6 @@
     package for configuring env - dotenv
     to load the env file we use dotenv.config(). This should be called in the beginning before we require any file
     in windows setting the env in commandline will be SET NODE_ENV=production & nodemon server.js
-
-* mongodb
-    document based database
-    db->collections(tables)->documents(rows)->key-value pair
-    use <dbname> - create or switch to an existing db
-    db.<collection name>.insertMany() - insert into a new collection multiple documents
-        insertOne() - will insert single document into a new collection
-        find() - will display all documents
-            $lte - lesser than or equal to
-            $gte - greater than or equal to
-            $lt - less than
-            $gt - greater than
-            eg: db.tours.find({$or:[{price: {$gt: 500}}, {rating: {$gt: 4.8}}]}, {name: 1}) - will give the tour name where price > 500 and rating > 4.8
-        updateOne() - will update single document
-            eg: db.tours.updateOne({name: "The snow adventurer"}, {$set: {price: 697}}) - will update the price of the tour name The snow adventurer
-                even if there were multiple documents, the updateOne() will only update first document
-                we can also insert a new key value pair
-                eg: db.tours.updateOne({name: "The sea explorer"}, {$set: {difficulty: "medium"}})
-        updateMany() - will update more than one documents at once
-        replaceOne() - will replace an entire document with a new one based on filter
-        replaceMany() - will replace more than one documents at once
-        deleteOne() - will delete the first result of a search
-            eg: db.tours.deleteOne({rating: {$lt: 4.8}}) - will delete the first tours with rating < 4.8
-        deleteMany() - will delete more than one documents at once
-            to delete all the documents  - db.tours.deleteMany({})
-    show dbs - will show all the db's
-    show collections - will show all the collections of curren db
-    db.<collection name>.drop() - will drop the collection
-    atlas - hosted db
-    cluster - instance of our db
-
-* mongoose
-    Object Data Modelling (ODM) for mongodb and Nodejs
-    Features: schemas to model data and relationships, data validation, simple query api, middleware
-    Mongoose schema - describe the structure of data, default values and validation
-    Mongoose Model - a wrapper for schema, providing an interface to db crud operations
-
 * steps to improve nod application
     caching - eg. Redis, memcached
     configure timeouts - timeouts in http library such as axios (connection timeout, read timeout)
@@ -425,4 +388,54 @@
     - thunderclient - a plugin to test out the api in vs code
     - jwt and server token
     - jwt are bearer token - who ever bears the token is a valid user.
-
+* Memory leaks
+    - Node.js uses the V8 engine for memory management, which includes a garbage collector
+    - garbage collector automatically frees up memory that is no longer in use
+    - memory leaks can also occur due to 
+        - global variables - don't declare unnecessary global variables
+        - event listeners - should close the event listeners
+        - closures - can take up memory and cause leaks
+        - timers - unreferenced timers that are not cleared
+    - tools used - heapdump, node.js builtin process.memoryUsage()
+* Error handling
+    - use callbacks - pass first argument as error in a callback function
+    - promises and async/await functions - use try/catch
+    - error objects - always throw instances of Error class or subclass to maintain stack traces
+    - global error handling - use process.on('uncaughtException) and process.on('unhandledRejection') to handle unhandled exceptions and promise rejections
+* API Versioning in node - express
+    - URL path versioning (commonly used) - mentioning version in URL path
+    - Query parameter versioning - version number is sent as query parameter
+    - Custom header versioning - version number is sent as headers (x-api-version)
+    - Routing based versioning (commonly used) - use different routers and controllers for different versions
+    - Environment variables - store the version to expose in env variables
+* How would you implement and manage microservices in a Node.js application?
+    - Design Microservices: Break down the application into smaller, loosely coupled services, each responsible for a specific business function. Define clear service boundaries and communication protocols.
+    - API Gateway: Use an API Gateway to manage incoming requests, route them to appropriate microservices, handle authentication, and provide other cross-cutting concerns like rate limiting and logging.
+    - Service Communication: Use RESTful APIs, gRPC, or message brokers (e.g., RabbitMQ, Kafka) for inter-service communication. Ensure that services can communicate reliably and handle failures gracefully.
+    - Service Discovery: Implement service discovery mechanisms to allow services to find and communicate with each other dynamically. Tools like Consul, Eureka, or Kubernetes Service Discovery can help with this.
+    - Containerization: Use containerization (e.g., Docker) to package microservices and their dependencies, making it easier to deploy and manage them across different environments.
+    - Orchestration: Use container orchestration platforms (e.g., Kubernetes) to manage the deployment, scaling, and operation of microservices.
+    - Monitoring and Logging: Implement centralized logging and monitoring to track the health and performance of microservices.
+    - Security: Secure communication between microservices using mutual TLS, and implement proper authentication and authorization. Ensure that each microservice follows security best practices.
+    - Versioning: Manage service versions to ensure compatibility and smooth upgrades.
+* Strategies for scaling node application
+    - vertical scaling - increase the resource (CPU,RAM) of a single server
+    - horizontal scaling - increase the number of application instances
+    - clustering - built in cluster module to fork child processes
+    - load balancing - distribute the incoming traffic across multiple instances of application(nginx)
+    - micro service architecture - spliting the application into services based on individual needs
+    - database sharding - for large db consider distributing data across multiple db instances
+    - caching - use caching services like redis or memcached to reduce database calls
+* Service mesh in microservice architecture
+    - service mesh is an infrastructure layer that provide various functionalities to manage service-to-service communication in microservice architecture
+        - service descovery - automatically detects and manages location of service within mesh (eureka)
+        - load balancing - distribute the incoming traffic across multiple instances of application(nginx)
+        - security - enforces security policies for service-to-service communication (mutual TLS)
+        - observability - monitoring and tracing service interactions(PM2)
+        - resilience - implement retry mechanisms
+* Idempotency
+    - performing the same operation repeatedly should produce the same outcome
+        - idempotency keys - when a request is processed create a unique idempotency key and save the results in cache or db. send the key in header for next request as `idempotency-key`
+        - db constraints - eg. save the transaction id against user id in db(both will be unique). throw error if db try to insert same transaction id
+        - token based idempotency - create a unique idempotency token (can use uuid library) and save the results in db. when a request comes with `idempotency-token`, check if it exists in db
+        - handling retires gracefully - eg. updating a resource should be designed in such a way that the result will always be same for same input

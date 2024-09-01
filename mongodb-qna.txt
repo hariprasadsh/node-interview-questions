@@ -1,0 +1,35 @@
+* mongodb
+    document based database
+    db->collections(tables)->documents(rows)->key-value pair
+    use <dbname> - create or switch to an existing db
+    db.<collection name>.insertMany() - insert into a new collection multiple documents
+        insertOne() - will insert single document into a new collection
+        find() - will display all documents
+            $lte - lesser than or equal to
+            $gte - greater than or equal to
+            $lt - less than
+            $gt - greater than
+            eg: db.tours.find({$or:[{price: {$gt: 500}}, {rating: {$gt: 4.8}}]}, {name: 1}) - will give the tour name where price > 500 and rating > 4.8
+        updateOne() - will update single document
+            eg: db.tours.updateOne({name: "The snow adventurer"}, {$set: {price: 697}}) - will update the price of the tour name The snow adventurer
+                even if there were multiple documents, the updateOne() will only update first document
+                we can also insert a new key value pair
+                eg: db.tours.updateOne({name: "The sea explorer"}, {$set: {difficulty: "medium"}})
+        updateMany() - will update more than one documents at once
+        replaceOne() - will replace an entire document with a new one based on filter
+        replaceMany() - will replace more than one documents at once
+        deleteOne() - will delete the first result of a search
+            eg: db.tours.deleteOne({rating: {$lt: 4.8}}) - will delete the first tours with rating < 4.8
+        deleteMany() - will delete more than one documents at once
+            to delete all the documents  - db.tours.deleteMany({})
+    show dbs - will show all the db's
+    show collections - will show all the collections of curren db
+    db.<collection name>.drop() - will drop the collection
+    atlas - hosted db
+    cluster - instance of our db
+
+* mongoose
+    Object Data Modelling (ODM) for mongodb and Nodejs
+    Features: schemas to model data and relationships, data validation, simple query api, middleware
+    Mongoose schema - describe the structure of data, default values and validation
+    Mongoose Model - a wrapper for schema, providing an interface to db crud operations
